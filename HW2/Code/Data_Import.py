@@ -1,3 +1,5 @@
+import subprocess
+subprocess.check_call(["pip", "install", "kaggle"])
 import os
 import subprocess
 import zipfile
@@ -30,3 +32,4 @@ else:
             zip_ref.extractall(rawdata_path)
         zip_file.unlink()  
         print(f"Extracted and removed {zip_file.name}")
+
