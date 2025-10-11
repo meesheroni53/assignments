@@ -32,4 +32,3 @@ else:
             zip_ref.extractall(rawdata_path)
         zip_file.unlink()  
         print(f"Extracted and removed {zip_file.name}")
-
