@@ -21,6 +21,8 @@ train_path = rawdata_path / "train.csv"
 test_path = rawdata_path / "test.csv"
 output_dir = script_dir.parent / "Output"
 output_dir.mkdir(exist_ok=True)
+conf_path = output_dir / "confusion_matrix_logistic.jpg"
+plot_path = output_dir / "Logistic Regression Plot"
 
 train_df = pd.read_csv(train_path)
 test_df = pd.read_csv(test_path)
@@ -65,6 +67,14 @@ X_test_raw = test_df.copy()
 
 categorical_cols = X_train_raw.select_dtypes(include=['object', 'category']).columns.tolist()
 
+# Save the processed data (before encoding)
+processed_data_dir = script_dir.parent / "ProcessedData"
+processed_data_dir.mkdir(exist_ok=True)
+
+train_df.to_csv(processed_data_dir / "train_processed.csv", index=False)
+test_df.to_csv(processed_data_dir / "test_processed.csv", index=False)
+print(f"Processed train and test CSVs saved to: {processed_data_dir}")
+
 # Check whether there are categories in the test or train that is not in the other and vice versa
 print("\n=== Checking for category mismatches between training and test sets ===")
 for col in categorical_cols:
@@ -91,6 +101,29 @@ encoder = ColumnTransformer(
 
 X_train = encoder.fit_transform(X_train_raw)
 X_test = encoder.transform(X_test_raw)
+
+# Get encoded categorical feature names
+encoded_cat_cols = encoder.named_transformers_['cat'].get_feature_names_out(categorical_cols)
+
+# Columns passed through without encoding
+remainder_cols = [col for col in X_train_raw.columns if col not in categorical_cols]
+
+# Combine all column names in correct order (encoded categorical + remainder)
+encoded_columns = list(encoded_cat_cols) + remainder_cols
+
+# Convert encoded arrays to DataFrames
+train_encoded_df = pd.DataFrame(X_train, columns=encoded_columns)
+test_encoded_df = pd.DataFrame(X_test, columns=encoded_columns)
+
+# Add stroke and id back for reference
+train_encoded_df['stroke'] = y_train.values
+test_encoded_df['id'] = test_df['id'].values
+
+# Save to CSV
+train_encoded_df.to_csv(processed_data_dir / "train_encoded.csv", index=False)
+test_encoded_df.to_csv(processed_data_dir / "test_encoded.csv", index=False)
+
+print(f"Encoded train and test data saved to: {processed_data_dir}")
 
 # Train-test split
 X_train_split, X_val, y_train_split, y_val = train_test_split(
